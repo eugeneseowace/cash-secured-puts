@@ -231,7 +231,7 @@
       ['Return', pct(c.roc, 2), `${pct(c.annualized)} annualised`],
       ['Keep full premium', pct(c.pop, 0), `assignment ≈ ${pct(c.probAssign, 0)}`],
       ['Any profit', pct(c.probProfit, 0), `stock above ${money(c.breakeven)}`],
-      ['Breakeven', money(c.breakeven), `${pct(c.discount)} below now`],
+      ['Breakeven', money(c.breakeven), c.discount >= 0 ? `${pct(c.discount)} below now` : `${pct(-c.discount)} above now (in the money)`],
       ['Delta · IV', `${c.delta.toFixed(2)} · ${pct(c.iv, 0)}`, `±1σ move ${money(c.expectedMove)}`],
       ['Bid / Ask', `${c.bid.toFixed(2)} / ${c.ask.toFixed(2)}`, `OI ${c.openInterest.toLocaleString()} · vol ${c.volume.toLocaleString()}`],
       ['Max loss (to $0)', money(c.breakeven * 100 * n, 0), 'if the stock went to zero'],
@@ -261,7 +261,7 @@
     const sel = state.sel;
     $('chain').innerHTML = '<thead><tr><th>Strike</th><th>OTM</th><th>Bid</th><th>Ask</th><th>Premium</th><th>Return</th><th>Annual</th><th>Keep prem.</th><th>Delta</th><th>IV</th><th>OI</th><th>Score</th></tr></thead><tbody>' +
       (rows.length ? rows.map((c) => `<tr data-c="${esc(c.contract)}" class="${sel && c.contract === sel.contract ? 'sel' : ''}${c.eligible ? '' : ' dim'}">
-        <td class="sym">$${c.strike}${c.stale ? '<span class="tag stale">LAST</span>' : ''}${c.noBid ? '<span class="tag stale">NO BID</span>' : ''}</td><td>${pct(c.otmPct)}</td>
+        <td class="sym">$${c.strike}${c.stale ? '<span class="tag stale">LAST</span>' : ''}${c.noBid ? '<span class="tag stale">NO BID</span>' : ''}${c.badQuote ? '<span class="tag stale">BAD PRINT</span>' : ''}</td><td>${pct(c.otmPct)}</td>
         <td>${c.bid.toFixed(2)}</td><td>${c.ask.toFixed(2)}</td><td>${c.premium.toFixed(2)}</td><td>${pct(c.roc, 2)}</td>
         <td>${pct(c.annualized)}</td><td>${pct(c.pop, 0)}</td><td>${c.delta.toFixed(2)}</td><td>${pct(c.iv, 0)}</td>
         <td>${c.openInterest.toLocaleString()}</td><td>${c.score == null ? '—' : `<span class="bar" style="width:${c.score * 0.5}px"></span>${c.score}`}</td></tr>`).join('')

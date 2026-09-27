@@ -88,6 +88,8 @@
   /**
    * Premium we can realistically collect.
    * - both sides quoted: the mid
+   * - a bid but no ask: the bid, which a seller can hit
+   * - a crossed quote (ask < bid) is not trusted and falls through to the last trade
    * - ask but no bid: nobody is buying, so a seller collects nothing (noBid)
    * - no quotes at all (market closed / data gap): the last trade, flagged stale
    */
@@ -95,6 +97,7 @@
     const bid = p.bid > 0 ? p.bid : 0;
     const ask = p.ask > 0 ? p.ask : 0;
     if (bid > 0 && ask >= bid) return { premium: (bid + ask) / 2, stale: false, noBid: false };
+    if (bid > 0 && ask === 0) return { premium: bid, stale: false, noBid: false };
     if (bid === 0 && ask > 0) return { premium: 0, stale: false, noBid: true };
     if (p.last > 0) return { premium: p.last, stale: true, noBid: false };
     return { premium: 0, stale: true, noBid: false };
@@ -112,7 +115,11 @@
     const closeTs = expiryClose(ctx.expiration);
     const dte = Math.max((closeTs - ctx.now) / DAY, 0.25);
     const T = dte / 365;
-    const { premium, stale, noBid } = premiumOf(p);
+    const quoted = premiumOf(p);
+    const { stale, noBid } = quoted;
+    // A put can never be worth more than its strike; a premium that high is a bad print, not income.
+    const badQuote = !(quoted.premium < K);
+    const premium = badQuote ? 0 : quoted.premium;
     let iv = impliedVol(premium, S, K, T, r);
     let ivSource = 'premium';
     if (iv == null || iv > 3) {
@@ -123,7 +130,8 @@
     const delta = normCdf(d1) - 1;
     const pop = normCdf(d2); // P(S_T > K): the put expires worthless and you keep the premium
     const breakeven = K - premium;
-    const probProfit = normCdf(d1d2(S, Math.max(breakeven, 0.01), T, r, iv)[1]);
+    // With no premium there is nothing to gain: the best case is breaking even.
+    const probProfit = round(premium) > 0 ? normCdf(d1d2(S, Math.max(breakeven, 0.01), T, r, iv)[1]) : 0;
     const collateral = K * 100;
     const roc = premium / K;
     const annualized = roc * 365 / dte;
@@ -141,6 +149,7 @@
       premium: round(premium),
       stale,
       noBid,
+      badQuote,
       credit: round(premium * 100, 2),
       collateral: round(collateral, 2),
       netCost: round(collateral - premium * 100, 2),
@@ -189,7 +198,7 @@
 
   /** Contracts worth considering at all: OTM, meaningful premium, sane delta. */
   function eligible(c) {
-    return !c.noBid && c.strike < c.spot && c.premium >= 0.05 && c.delta <= -0.05 && c.delta >= -0.45 && c.annualized > 0.02;
+    return !c.noBid && !c.badQuote && c.strike < c.spot && c.premium >= 0.05 && c.delta <= -0.05 && c.delta >= -0.45 && c.annualized > 0.02;
   }
 
   /** Pick conservative / balanced / aggressive from scored candidates. */
@@ -214,8 +223,8 @@
 
   /** Lognormal density of the price at expiry (for the payoff chart overlay). */
   function lognormalPdf(x, S, T, r, iv) {
-    if (x <= 0) return 0;
     const s = iv * Math.sqrt(T);
+    if (x <= 0 || !(s > 0)) return 0;
     const mu = Math.log(S) + (r - iv * iv / 2) * T;
     const z = (Math.log(x) - mu) / s;
     return Math.exp(-z * z / 2) / (x * s * Math.sqrt(2 * Math.PI));

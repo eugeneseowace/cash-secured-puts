@@ -7,8 +7,9 @@ Live cash-secured put finder. No API key, no dependencies (Node 18+).
 
 ```
 npm start          # http://localhost:5700
-npm test           # 48 offline tests (Yahoo mocked): maths, UI decisions, API, server
-npm run test:live  # real Yahoo round-trip
+npm test           # 52 offline tests (Yahoo mocked): maths, 20k-contract fuzz invariants, UI decisions, API, server
+npm run test:live  # live self-test: 8 tickers + full scan, every contract checked against the invariants
+npm run selftest   # both of the above
 ```
 
 Data: Yahoo Finance option chains (`v7/finance/options`, needs a cookie + crumb session, handled in `src/yahoo.js`) and daily chart (`v8/finance/chart`).

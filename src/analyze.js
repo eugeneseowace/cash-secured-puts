@@ -135,6 +135,12 @@ function assess(spot, st, best) {
   if (st.fromHigh != null && st.fromHigh < -0.35) add(-4, 'warn', `Price is ${pct(-st.fromHigh, 0)} below its 52-week high.`);
   if (best && best.stale) add(-3, 'warn', 'Market is closed or quotes are thin — premiums use the last trade and may change at the open.');
 
+  if (!best) {
+    // A great stock is still a poor CSP candidate when no put is worth selling.
+    add(-15, 'bad', 'No out-of-the-money put currently pays a meaningful premium with a real bid.');
+    score = Math.min(score, 47);
+  }
+
   score = Math.max(0, Math.min(100, Math.round(score)));
   const grade = score >= 75 ? 'A' : score >= 62 ? 'B' : score >= 48 ? 'C' : 'D';
   return { score, grade, notes };
