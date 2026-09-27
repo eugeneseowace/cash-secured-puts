@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSP Finder — Cash-Secured Puts</title>
+  <meta name="description" content="Live cash-secured put finder: the best CSP ideas right now, and a one-ticker analysis with charts, premium, profit and risk.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310b981'/%3E%3Cpath d='M8 22l6-6 4 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8"/><path d="M8 22l6-6 4 4 7-9"/></svg>
+      </span>
+      <div>
+        <h1>CSP Finder</h1>
+        <p>Cash-secured puts · live option chains</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="analyse" class="active" aria-selected="true">Analyse a stock</button>
+      <button role="tab" data-tab="ideas" aria-selected="false">Top CSP ideas now</button>
+      <button role="tab" data-tab="learn" aria-selected="false">How it works</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ANALYSE -->
+    <section id="tab-analyse" class="tab-panel">
+      <form id="search" class="search" autocomplete="off">
+        <label class="field grow">
+          <span>Stock ticker</span>
+          <input id="symbol" name="symbol" placeholder="e.g. AAPL, KO, TSLA, SPY" maxlength="15" required>
+        </label>
+        <label class="field">
+          <span>Cash available ($)</span>
+          <input id="cash" name="cash" type="number" min="0" step="any" inputmode="decimal" placeholder="optional">
+        </label>
+        <button class="btn primary" id="go" type="submit">Analyse</button>
+      </form>
+      <div class="quick" id="quick"></div>
+
+      <div id="status" class="status" hidden></div>
+
+      <div id="result" hidden>
+        <div class="card hero">
+          <div class="hero-left">
+            <div class="ticker-line">
+              <h2 id="r-symbol"></h2>
+              <span id="r-state" class="pill"></span>
+            </div>
+            <div id="r-name" class="muted"></div>
+          </div>
+          <div class="hero-price">
+            <div id="r-price" class="price mono"></div>
+            <div id="r-change" class="mono"></div>
+          </div>
+          <div class="grade-box">
+            <div id="r-grade" class="grade"></div>
+            <div class="muted small">CSP grade</div>
+          </div>
+          <div class="refresh">
+            <label class="switch"><input type="checkbox" id="auto"> <span>Live refresh (60s)</span></label>
+            <div id="r-asof" class="muted small"></div>
+          </div>
+        </div>
+
+        <div class="card verdict">
+          <div class="verdict-tag">Recommendation</div>
+          <p id="r-summary"></p>
+        </div>
+
+        <div class="profiles" id="profiles"></div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Selected trade</h3>
+            <div class="muted small" id="sel-label"></div>
+          </div>
+          <div class="kpis" id="kpis"></div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-head"><h3>Price chart</h3><div class="legend" id="price-legend"></div></div>
+            <div id="chart-price" class="chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Profit / loss at expiry</h3><div class="legend" id="payoff-legend"></div></div>
+            <div id="chart-payoff" class="chart"></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-head"><h3>Price scenarios at expiry</h3><div class="muted small" id="scen-note"></div></div>
+            <table class="table" id="scenarios"></table>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Stock analysis</h3></div>
+            <ul class="notes" id="notes"></ul>
+            <div class="stats" id="stats"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Strike ladder</h3>
+            <div class="chips" id="exp-chips"></div>
+          </div>
+          <div id="chart-ladder" class="chart short"></div>
+          <div class="table-wrap">
+            <table class="table click" id="chain"></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IDEAS -->
+    <section id="tab-ideas" class="tab-panel" hidden>
+      <div class="ideas-bar">
+        <div>
+          <h2>Best cash-secured puts right now</h2>
+          <p class="muted">Scans liquid, optionable US large caps and ETFs. Each row is that stock's best ~30-day put.</p>
+        </div>
+        <div class="ideas-controls">
+          <label class="field"><span>Max cash per contract ($)</span><input id="budget" type="number" min="0" step="any" inputmode="numeric" placeholder="any"></label>
+          <label class="field"><span>Trend</span>
+            <select id="trend-filter"><option value="">Any</option><option value="up">Uptrend only</option><option value="noEarn">No earnings before expiry</option></select>
+          </label>
+          <button class="btn" id="rescan">Rescan</button>
+        </div>
+      </div>
+      <div id="ideas-status" class="status" hidden></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="table click" id="ideas"></table>
+        </div>
+        <div class="muted small foot" id="ideas-foot"></div>
+      </div>
+    </section>
+
+    <!-- LEARN -->
+    <section id="tab-learn" class="tab-panel" hidden>
+      <div class="card prose">
+        <h2>What is a cash-secured put?</h2>
+        <p>You <b>sell</b> a put option and set aside enough cash to buy 100 shares at the strike price. You collect the premium up front.</p>
+        <ul>
+          <li><b>Stock stays above the strike at expiry:</b> the put expires worthless and you keep the whole premium.</li>
+          <li><b>Stock ends below the strike:</b> you are assigned — you buy 100 shares at the strike. Your effective cost is <i>strike − premium</i> (the breakeven).</li>
+        </ul>
+        <p>Only sell puts on stocks you would be happy to own at the strike price.</p>
+
+        <h3>How the numbers are worked out</h3>
+        <ul>
+          <li><b>Premium</b> = mid of bid/ask (last trade when the market is closed). <b>Credit</b> = premium × 100.</li>
+          <li><b>Cash secured</b> = strike × 100. <b>Return</b> = premium ÷ strike. <b>Annualised</b> = return × 365 ÷ days to expiry.</li>
+          <li><b>Chance of keeping the full premium</b> = probability the stock finishes above the strike (Black-Scholes N(d2), using the option's own implied volatility).</li>
+          <li><b>Delta</b> ≈ how much the put moves per $1 in the stock; many CSP sellers aim for 0.15–0.30.</li>
+          <li><b>Expected move</b> = price × IV × √(days/365), about a one-standard-deviation range.</li>
+        </ul>
+
+        <h3>How contracts are scored (0–100)</h3>
+        <ul>
+          <li>Annualised yield (30) · delta in the 0.15–0.30 zone (20) · 20–50 days to expiry (20) · liquidity: bid/ask spread and open interest (15) · cushion below today's price (10) · probability (5).</li>
+          <li>Penalties: earnings before expiry (−8), stale quotes (−5), under 8% annualised (−10).</li>
+          <li><b>Conservative</b> ≈ 0.15 delta, <b>Balanced</b> = highest score, <b>Aggressive</b> ≈ 0.33 delta.</li>
+        </ul>
+
+        <h3>Stock grade (A–D)</h3>
+        <p>Trend (price vs 50/200-day averages), implied vs realised volatility (are you being paid enough?), RSI, 60-day support, earnings timing and company size.</p>
+
+        <p class="warn-box">Educational tool, not financial advice. Data comes from Yahoo Finance and can be delayed or incomplete. Options carry risk — assignment can leave you holding shares worth well below your strike.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="muted small">Data: Yahoo Finance (delayed). Educational use only — not financial advice.</footer>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="csp.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

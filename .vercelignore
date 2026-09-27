@@ -1,0 +1,6 @@
+# server.js is the local dev server only; Vercel would otherwise route everything through it.
+server.js
+test
+scripts
+README.md
+.vercel

@@ -1,0 +1,15 @@
+{
+  "name": "cash-secured-puts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live cash-secured put finder: best CSP ideas now, plus a one-ticker deep dive with charts, premium, P/L and analysis.",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "test:live": "node scripts/live-check.js"
+  },
+  "engines": { "node": ">=18" }
+}
